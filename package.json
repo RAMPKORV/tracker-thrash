@@ -1,0 +1,17 @@
+{
+  "name": "tracker-trash",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A cursed tracker-module visualizer. Drop a .mod/.xm/.s3m/.it, receive demoscene + musical damage.",
+  "scripts": {
+    "dev": "node tools/serve.mjs",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "node --test tests/unit/",
+    "test:e2e": "playwright test",
+    "shots": "node tests/shots.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0"
+  }
+}

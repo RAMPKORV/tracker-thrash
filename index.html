@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07070c">
+<title>TRACKER TRASH — a cursed module visualizer</title>
+<meta name="description" content="Drop a tracker module (.mod .xm .s3m .it). Get demoscene beauty, live chords, and an unreasonable amount of cartoon butt. 100% local.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2307070c'/%3E%3Cpath d='M2 5h12v2H2zm0 4h8v2H2z' fill='%2300f0ff'/%3E%3Crect x='11' y='9' width='3' height='4' fill='%23ff2bd6'/%3E%3C/svg%3E">
+<link rel="preload" href="assets/fonts/vt323-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/silkscreen-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="gate" class="gate">
+  <div class="gate-bg" aria-hidden="true"></div>
+  <div class="gate-scan" aria-hidden="true"></div>
+  <div class="gate-box">
+    <div class="gate-kicker">MODULE.EXE-ADJACENT EXPERIENCE · EST. 1994-ish</div>
+    <h1 class="gate-title"><span>TRACKER</span><span class="pink">TRASH</span></h1>
+    <p class="gate-tag">Drop a tracker module. Receive demoscene. Lose dignity.</p>
+    <div class="gate-warning">
+      <b>⚠ CONTENT ADVISORY</b>
+      <span>cartoon butt humour · flashing dither · one (1) brown note · severe groove</span>
+    </div>
+    <div class="gate-actions">
+      <button id="gate-enter" class="btn primary" autofocus>ENTER (HEADPHONES ON)</button>
+      <button id="gate-serious" class="btn">ENTER IN SERIOUS MODE</button>
+    </div>
+    <p class="gate-fine">no uploads · no accounts · everything is local · libopenmpt inside</p>
+    <p class="gate-status" id="lib-status">warming up the 1994 machinery…</p>
+  </div>
+  <div class="gate-foot">not affiliated with your childhood · <span id="gate-version">v1.0</span></div>
+</div>
+
+<div id="app" class="app" aria-hidden="true">
+  <canvas id="stage" aria-hidden="true"></canvas>
+  <div class="crt" aria-hidden="true"></div>
+  <div id="gag-layer" class="gag-layer" aria-hidden="true"></div>
+
+  <div id="hud" class="hud">
+    <header class="topbar">
+      <div class="brand" aria-label="Tracker Trash">
+        <span class="brand-main">TRACKER</span><span class="brand-pink">TRASH</span>
+        <span class="brand-sub">a cursed module visualizer</span>
+      </div>
+      <div class="track-info">
+        <div id="track-title" class="track-title">NO MODULE LOADED</div>
+        <div id="track-sub" class="track-sub">drop a .mod .xm .s3m .it (or anything libopenmpt eats)</div>
+      </div>
+      <div class="top-actions">
+        <button id="btn-open" class="btn tiny" title="Open a module file (O)">OPEN</button>
+        <button id="btn-demo" class="btn tiny" title="Load the built-in demo (D)">DEMO</button>
+        <button id="btn-help" class="btn tiny" title="Help and credits (?)">?</button>
+      </div>
+    </header>
+
+    <aside class="left-rail">
+      <section class="panel meter-panel">
+        <div class="panel-label">CHANNEL ACTIVITY <span class="dim">live VU</span></div>
+        <div id="meters" class="meters"></div>
+      </section>
+      <section class="panel stats-panel">
+        <div class="panel-label">MUSIC FACTS</div>
+        <div class="stat"><span>POLYPHONY</span><b id="stat-poly">0</b></div>
+        <div class="stat"><span>NOTES/SEC</span><b id="stat-rate">0.0</b></div>
+        <div class="stat"><span>SPICE</span><b id="stat-spice">0%</b></div>
+        <div class="stat"><span>RANGE</span><b id="stat-range">—</b></div>
+        <div class="stat"><span>SECTION</span><b id="stat-section">0</b></div>
+      </section>
+    </aside>
+
+    <aside class="right-rail">
+      <section class="panel forecast-panel">
+        <div class="panel-label">TURD FORECAST™ <span class="dim">look-ahead</span></div>
+        <div id="forecast" class="forecast"></div>
+        <div class="forecast-note">next bars, as interpreted by the bass department</div>
+      </section>
+      <section class="panel wheel-panel">
+        <div class="panel-label">PITCH-CLASS CLOCK</div>
+        <canvas id="wheel" width="180" height="180"></canvas>
+        <div class="keyline"><span>KEY</span><b id="key-name">—</b></div>
+        <div class="keyline"><span>ROMAN</span><b id="roman-name">—</b></div>
+      </section>
+    </aside>
+
+    <section class="bottom-dock">
+      <section class="panel chord-panel">
+        <div class="chord-head"><span id="chord-roman" class="roman">—</span><span id="chord-quality">WAITING FOR NOTES</span></div>
+        <div id="chord-name" class="chord-name">???</div>
+        <div id="chord-notes" class="chord-notes">drop a module, coward</div>
+        <div class="chord-meta">
+          <span id="key-name-2">KEY —</span>
+          <span id="chord-conf">—</span>
+          <span id="chord-bass">BASS —</span>
+        </div>
+        <div class="next-chords" id="next-chords"></div>
+      </section>
+
+      <section class="panel roll-panel">
+        <div class="panel-head">
+          <span>PIANO ROLL</span>
+          <span class="dim">look-behind ←&nbsp;&nbsp;playhead&nbsp;&nbsp;→ look-ahead</span>
+          <span id="roll-range" class="dim">—</span>
+        </div>
+        <canvas id="roll"></canvas>
+      </section>
+
+      <section class="panel grid-panel">
+        <div class="panel-head"><span>PATTERN</span><span id="pattern-label">--</span></div>
+        <canvas id="grid"></canvas>
+        <div class="grid-foot"><span id="order-label">ORDER --</span><span id="row-label">ROW --</span></div>
+      </section>
+    </section>
+
+    <section id="broadcast" class="broadcast" aria-live="off">
+      <div class="bc-scene">
+        <span>SCENE</span>
+        <b id="scene-name">DEMOSCENE PLAZA</b>
+        <em id="genre-name">CHIPTUNE</em>
+      </div>
+      <div class="bc-chord-wrap">
+        <b id="bc-chord">???</b>
+        <div><span id="bc-roman">—</span><span id="bc-key">KEY —</span></div>
+      </div>
+      <div class="bc-notes-wrap">
+        <span>HARMONY</span>
+        <b id="bc-notes">—</b>
+        <span id="bc-next">NEXT —</span>
+      </div>
+      <div id="bc-channels" class="bc-channels" aria-label="Channel activity"></div>
+      <button id="btn-music" class="btn tiny" title="Open the full music-nerd panels (M)">MUSIC PANELS</button>
+    </section>
+
+    <footer class="transport">
+      <button id="btn-play" class="btn transport-btn" title="Play / pause (Space)">▶</button>
+      <button id="btn-restart" class="btn transport-btn" title="Restart (R)">⟲</button>
+      <div class="seek-wrap">
+        <input id="seek" class="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek">
+        <div id="seek-fill" class="seek-fill"></div>
+      </div>
+      <div id="time" class="readout">00:00 / 00:00</div>
+      <div id="bpm" class="readout">— BPM · SPD —</div>
+      <label class="mini-slider" title="Gag intensity">CHAOS
+        <input id="chaos" type="range" min="0" max="10" step="1" value="4">
+        <b id="chaos-val">4</b>
+      </label>
+      <label class="mini-toggle" title="Cartoon butt / poop engine">
+        <input id="poop-toggle" type="checkbox" checked> POOP
+      </label>
+      <button id="btn-nerd" class="btn tiny" title="Toggle full music panels (M)">PANELS</button>
+      <button id="btn-serious" class="btn tiny" title="Serious mode (S)">SERIOUS</button>
+      <button id="btn-hud" class="btn tiny" title="Hide / show HUD (H)">HUD</button>
+      <button id="btn-full" class="btn tiny" title="Fullscreen (F)">⛶</button>
+    </footer>
+  </div>
+
+  <div id="caption" class="caption" aria-hidden="true"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="loading" class="loading" hidden>
+    <div class="loading-box">
+      <div class="loading-title">PARSING POSSIBLY ILLEGAL AMOUNTS OF GROOVE</div>
+      <div class="loading-bar"><i></i></div>
+      <div id="loading-text">unpacking samples…</div>
+    </div>
+  </div>
+
+  <input id="file" class="sr-only" type="file" accept=".mod,.xm,.s3m,.it,.mptm,.mtm,.669,.far,.med,.okt,.stm,.ult,.mo3,.umx,.dbm,.dsm,.mdl,audio/*" aria-label="Choose a tracker module">
+</div>
+
+<dialog id="help" class="help-dialog">
+  <form method="dialog">
+    <h2>TRACKER TRASH: FIELD MANUAL</h2>
+    <div class="help-grid">
+      <div>
+        <h3>WHAT IS THIS</h3>
+        <p>A demoscene toy that plays tracker modules with libopenmpt and draws what the notes are doing: chords, key, piano roll, pattern grid, channel VU, and a look-ahead forecast. Plus an unreasonable cartoon butt.</p>
+        <h3>DROP A FILE</h3>
+        <p>Anything libopenmpt supports: .mod .xm .s3m .it .mptm .mtm .669 .far .med .okt .stm .ult .mo3 .umx and friends. Nothing is uploaded. Everything runs in your browser.</p>
+        <h3>KEYS</h3>
+        <p><b>Space</b> play/pause · <b>←/→</b> seek 5s · <b>R</b> restart · <b>O</b> open · <b>D</b> demo · <b>M</b> full music panels · <b>S</b> serious · <b>H</b> HUD · <b>G</b> gross toggle · <b>F</b> fullscreen · <b>V</b> next background · <b>?</b> this</p>
+      </div>
+      <div>
+        <h3>READING THE HUD</h3>
+        <p>By default the music lives in the scene: the chord is a monument/sign/rune, notes are physical objects, channel activity is pipes/KPI bars/CRT columns, and the next chord is foreshadowed in-world. Press <b>M</b> for the full piano roll, pattern grid and pitch-class clock when you want the x-ray view.</p>
+        <h3>SERIOUS MODE</h3>
+        <p>Keeps the demoscene and the theory, removes almost all gags and the poop engine. For when a musician walks in, or you are at work.</p>
+        <h3>ACCESSIBILITY</h3>
+        <p>Flash-safe by default: no rapid full-screen flashes, capped shake, reduced motion respected. The chaos slider goes to 0. If you are photosensitive, keep it low. The captions and HUD are text, not baked into the canvas.</p>
+        <h3>CREDITS</h3>
+        <p>Audio: <b>libopenmpt</b> (BSD-3-Clause) via <b>chiptune3</b> (MIT). Fonts: VT323 and Silkscreen (OFL). Everything else is procedural, hand-drawn pixel nonsense. Demo module “dj rat severe groove” was generated for this project.</p>
+        <p class="dim">No copyrighted characters, images, or audio samples are bundled. Any resemblance to a real butt is coincidental.</p>
+      </div>
+    </div>
+    <div class="help-foot">
+      <button class="btn" value="close">CLOSE</button>
+      <span class="dim">Your speakers are your own responsibility.</span>
+    </div>
+  </form>
+</dialog>
+
+<div id="file-drop" class="file-drop" aria-hidden="true">
+  <div class="file-drop-inner">
+    <div class="file-drop-glyph">⤓</div>
+    <div>DROP THE MODULE, COWARD</div>
+    <div class="file-drop-sub">.mod .xm .s3m .it and 60+ other formats</div>
+  </div>
+</div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
