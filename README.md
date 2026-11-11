@@ -12,7 +12,7 @@ A pure-frontend, GitHub-Pages-friendly music visualizer for tracker modules (`.m
 - **Diegetic absurdity**: the chord is a monument, the channel meters are pipes/organ tubes/KPI bars/CRT columns, the notes are physical objects, and the poop forecast is a weather report.
 - **A scatological cartoon mascot** (“THE BASS ASS”) whose turd type, size, colour tag, and label are driven by the bass note and the current chord. It piles up, gets flushed on section changes, and is always labelled with the note/chord that caused it.
 - **Running characters and gags**: DJ Rat, Bass Ass, Sad Wizard, Business Dog, The Orb, Uncle Tracker, GARY the hidden pixel, fake dialogs, ads, SMPTE emergencies, a fake media player, BSOD, “graphic design is my passion”, scroller hijacks, achievements, fog, and more.
-- **Monsquaz mode**: a full-screen, music-synced recreation of the classic four-phase up / sunset dance / down / zoom loop, using the actual Monsquaz up/down backgrounds, glossy arrows, sunset photo, side GIF, and a non-explicit Monsquazman head crop, composited with original art and retrowave zoom effects. The actual head crop spins in 3D ("rotate the potato") during the zoom phase. Press **Z** or the **MONSQ** button. The original NSFW full-body asset is not bundled.
+- **Monsquaz mode**: a full-screen, music-synced recreation of the classic four-phase up / sunset dance / down / zoom loop, using the actual upstream Monsquaz up/down backgrounds, glossy arrows, sunset photo, side GIF, and the actual **monsquazman.png** full-body figure, censored with the same green up-arrow used by the original's censored edition. Press **Z** or the **MONSQ** button. The uncensored NSFW asset is not bundled.
 - **A show director** that changes scene, camera, effect, and whole presentation format (world / fullscreen FX / multiview / TRACKER OS terminal / SMPTE) on musical section boundaries. It is not one stage with palette swaps.
 
 Everything runs locally in the browser. No uploads, no accounts, no server-side code.
@@ -80,7 +80,7 @@ Press **M** for the full panels: channel meters, music facts, piano roll, patter
 - Keyboard-first controls and labelled buttons.
 - All module data stays in the browser.
 
-The cartoon butt is deliberately **cartoon, non-anatomical, and non-sexual**. No explicit anatomy, no sexual content, no copyrighted meme images, no bundled samples. The “banned image” gag is a pixelated HR notice, not a shock image.
+The cartoon butt is deliberately **cartoon, non-anatomical, and non-sexual**. No explicit anatomy, no sexual content, no copyrighted meme images, no bundled samples. The “banned image” gag is a pixelated HR notice, not a shock image. Monsquaz mode uses the actual upstream 3D figure in its canonical green-arrow censored edition; the uncensored asset is not bundled.
 
 ---
 
@@ -166,7 +166,7 @@ src/sprites.js           pixel mascots
 src/poop.js              turd taxonomy + procedural renderer
 vendor/                  chiptune3 + libopenmpt wasm build + licenses
 assets/fonts/            VT323 + Silkscreen (OFL)
-assets/monsquaz/         attributed Monsquaz assets + original head crop
+assets/monsquaz/         attributed Monsquaz assets, incl. the censored monsquazman
 tests/helpers/           in-memory MOD fixture for tests (not shipped)
 tests/unit/              Node TDD suites
 tests/e2e/               Playwright BDD suites
@@ -181,7 +181,7 @@ tools/                   static server and module inspector
 - **chiptune3** — MIT. See `vendor/CHIPTUNE3-LICENSE.txt`.
 - **VT323** and **Silkscreen** — SIL Open Font License. See `assets/fonts/`.
 - Visualizer code, sprites, gags, and all procedural art — MIT (see `LICENSE`), except third-party components above.
-- **Monsquaz mode** is a fan recreation of the choreography from [Monsquaz/monsquaz-css3-html5](https://github.com/Monsquaz/monsquaz-css3-html5) (ISC repository metadata). The non-explicit source assets (up/down backgrounds, arrows, sunset photo, side GIF, and a head crop) are bundled under `assets/monsquaz/` with attribution in `ATTRIBUTION.md`. The original full-body NSFW asset is intentionally not included; its role is taken by an original clothed cartoon body with the actual head crop.
+- **Monsquaz mode** is a fan recreation of the choreography from [Monsquaz/monsquaz-css3-html5](https://github.com/Monsquaz/monsquaz-css3-html5) (ISC repository metadata). The source assets (up/down backgrounds, arrows, sunset photo, side GIF, and the actual monsquazman figure) are bundled under `assets/monsquaz/` with attribution in `ATTRIBUTION.md`. `monsquazman.png` is the upstream render with the canonical green up-arrow censor baked over the groin, matching the original's censored edition; the uncensored NSFW asset is not included.
 - No copyrighted sprites, images, audio samples, or trademarks are bundled. Any resemblance to a real butt is coincidental.
 
 Not affiliated with the OpenMPT project, GitHub, or your childhood.

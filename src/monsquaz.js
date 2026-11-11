@@ -8,10 +8,12 @@
  *   3. blue frame, two pink down-arrows, bald guy falls
  *   4. blue square / yellow-green circles / red flash / giant zoom
  *
- * The original meme asset is explicit nudity, so the guy here is an original
- * clothed cartoon bald man. No original visual/photo/GIF assets are bundled.
- * Phases are derived from the tracker pattern's row, so the loop is in sync
- * with the module; kicks add jumps and snares add spin/flash.
+ * The figure is the actual monsquazman.png from the upstream repository
+ * (images/monsquazman.png), using the canonical censored edition: the same
+ * green up-arrow covers the groin, exactly as in the original's censored cut.
+ * The uncensored asset is not bundled. Phases are derived from the tracker
+ * pattern's row, so the loop is in sync with the module; kicks add jumps and
+ * snares add spin/flash.
  */
 import { drawSprite, RAT, DOG } from './sprites.js'
 import { keyName } from './theory.js'
@@ -37,7 +39,7 @@ export const FRAME = { x: 72, y: 0, w: 336, h: 252 }
 
 function loadAssets() {
   if (typeof Image === 'undefined') return {}
-  const names = { up: 'up.png', down: 'down.png', sunset: 'sunset.jpg', arrowUp: 'uparrow.png', arrowDown: 'downarrow.png', gallo: 'd-gallo.gif', head: 'head.png' }
+  const names = { up: 'up.png', down: 'down.png', sunset: 'sunset.jpg', arrowUp: 'uparrow.png', arrowDown: 'downarrow.png', gallo: 'd-gallo.gif', man: 'monsquazman.png' }
   const out = {}
   for (const [key, file] of Object.entries(names)) {
     const img = new Image()
@@ -122,126 +124,47 @@ function drawArrow(ctx, x, y, w, h, dir = 1, alpha = 1) {
   ctx.restore()
 }
 
-function drawHead3D(ctx, img, cx, cy, w, h, yaw = 0, pitch = 0, roll = 0) {
-  const cyaw = Math.cos(yaw)
-  const syaw = Math.sin(yaw)
-  const sx = Math.max(0.12, Math.abs(cyaw))
-  const depth = syaw * w * 0.16
-  ctx.save()
-  ctx.translate(cx, cy)
-  ctx.rotate(roll + Math.sin(pitch) * 0.06)
-  // fake cylindrical thickness: dark back copies
-  for (let k = 2; k >= 1; k--) {
-    ctx.save()
-    ctx.globalAlpha = 0.16 * k
-    ctx.translate(-depth * k, 0)
-    ctx.scale(sx, 1 - Math.abs(Math.sin(pitch)) * 0.05)
-    ctx.drawImage(img, -w / 2, -h / 2, w, h)
-    ctx.restore()
-  }
-  ctx.scale(cyaw < 0 ? -sx : sx, 1 - Math.abs(Math.sin(pitch)) * 0.08)
-  ctx.drawImage(img, -w / 2, -h / 2, w, h)
-  // hard specular edge when turning
-  ctx.globalAlpha = 0.18 + Math.abs(syaw) * 0.2
-  ctx.strokeStyle = '#fff'
-  ctx.lineWidth = 1
-  ctx.beginPath()
-  ctx.ellipse(0, 0, w * 0.47, h * 0.46, 0, -Math.PI * 0.9, Math.PI * 0.15)
-  ctx.stroke()
-  ctx.restore()
-}
-
-function drawBaldGuy(ctx, x, y, scale, pose = 'rise', rot = 0, t = 0, kick = 0, headImg = null, headYaw = 0, headPitch = 0, headRoll = 0) {
+/**
+ * The real deal: monsquazman.png, feet-anchored. The asset is 194x401 and
+ * already carries the canonical green-arrow censor over the groin, so no
+ * explicit pixels are bundled. A small horizontal squash when he turns keeps
+ * the flat render feeling like the sprite in the original loop.
+ */
+function drawMan(ctx, img, x, y, h, rot = 0, yaw = 0, pitch = 0, alpha = 1) {
   ctx.save()
   ctx.translate(x, y)
   ctx.rotate(rot)
-  ctx.scale(scale, scale)
-  const skin = '#e2a36a', dark = '#a96c42', outline = 'rgba(5,5,10,.9)'
-  const shirt = '#f2efe4', jean = '#26315c', shoe = '#11121a'
-  const bob = pose === 'dance' ? sinT(t * 5) * 1.5 : 0
-  const armA = pose === 'rise' ? -2.45 : pose === 'fall' ? -1.7 : pose === 'dance' ? -1.35 + sinT(t * 4) * 0.8 : -0.55
-  const armB = pose === 'rise' ? -0.95 : pose === 'fall' ? 1.7 : pose === 'dance' ? 1.35 - sinT(t * 4 + 1) * 0.8 : 0.55
-  const legA = pose === 'dance' ? sinT(t * 4) * 0.45 : pose === 'fall' ? -0.45 : 0.04
-  const legB = pose === 'dance' ? -sinT(t * 4) * 0.45 : pose === 'fall' ? 0.45 : -0.04
-
-  if (pose !== 'zoom' && pose !== 'fall') {
-    ctx.fillStyle = 'rgba(0,0,0,.28)'
-    ctx.beginPath(); ctx.ellipse(0, 3, 27, 5, 0, 0, TAU); ctx.fill()
-  }
-
-  const leg = (dx, ang) => {
-    ctx.save(); ctx.translate(dx, -30 + bob); ctx.rotate(ang)
-    ctx.fillStyle = jean; ctx.strokeStyle = outline; ctx.lineWidth = 1.5
-    ctx.beginPath(); ctx.roundRect(-5.5, 0, 11, 28, 3); ctx.fill(); ctx.stroke()
-    ctx.fillStyle = shoe
-    ctx.beginPath(); ctx.roundRect(-6.5, 25, 14, 6, 2); ctx.fill(); ctx.stroke()
+  ctx.globalAlpha *= alpha
+  if (img?.complete && img.naturalWidth) {
+    const w = h * (img.naturalWidth / img.naturalHeight)
+    const sx = 0.84 + Math.abs(Math.cos(yaw)) * 0.16
+    const sy = 1 + Math.abs(Math.sin(pitch)) * 0.04
+    ctx.scale(sx, sy)
+    ctx.drawImage(img, -w / 2, -h, w, h)
     ctx.restore()
+    return true
   }
-  leg(-8, legA); leg(8, legB)
+  // Asset-free fallback: a neutral silhouette so a failed image load never
+  // takes the show down.
+  ctx.fillStyle = '#d8a578'
+  ctx.strokeStyle = 'rgba(5,5,10,.9)'
+  ctx.lineWidth = 1.5
+  const u = h / 150
+  ctx.beginPath(); ctx.arc(0, -h + 12 * u, 11 * u, 0, TAU); ctx.fill(); ctx.stroke()
+  ctx.beginPath(); ctx.roundRect(-16 * u, -h + 24 * u, 32 * u, 54 * u, 8 * u); ctx.fill(); ctx.stroke()
+  ctx.beginPath(); ctx.roundRect(-14 * u, -h + 78 * u, 12 * u, 62 * u, 6 * u); ctx.fill(); ctx.stroke()
+  ctx.beginPath(); ctx.roundRect(2 * u, -h + 78 * u, 12 * u, 62 * u, 6 * u); ctx.fill(); ctx.stroke()
+  ctx.fillStyle = '#00e070'
+  ctx.fillRect(-12 * u, -h + 66 * u, 24 * u, 18 * u)
+  ctx.restore()
+  return false
+}
 
-  // torso — white tank top (clothed edition)
-  ctx.fillStyle = shirt; ctx.strokeStyle = outline; ctx.lineWidth = 1.7
-  ctx.beginPath(); ctx.roundRect(-16, -67 + bob, 32, 40, 7); ctx.fill(); ctx.stroke()
-  ctx.fillStyle = '#d8d2c2'
-  ctx.fillRect(-15, -31 + bob, 30, 3)
-  ctx.fillStyle = '#0c6'
-  ctx.fillRect(-14, -57 + bob, 28, 6)
-  ctx.fillStyle = '#052'
-  ctx.font = '8px "Silkscreen", monospace'
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-  ctx.fillText('M', 0, -53 + bob)
-  // neck
-  ctx.fillStyle = dark
-  ctx.fillRect(-5, -73 + bob, 10, 8)
-
-  const arm = (dx, ang) => {
-    ctx.save(); ctx.translate(dx, -60 + bob); ctx.rotate(ang)
-    ctx.strokeStyle = outline; ctx.lineWidth = 1.5
-    ctx.fillStyle = skin
-    ctx.beginPath(); ctx.roundRect(-4.5, 0, 9, 27, 4); ctx.fill(); ctx.stroke()
-    ctx.beginPath(); ctx.arc(0, 28, 4.5, 0, TAU); ctx.fill(); ctx.stroke()
-    ctx.restore()
-  }
-  arm(-17, armA); arm(17, armB)
-
-  // Head: use the actual Monsquazman head crop when available, over an
-  // original clothed body. The explicit full-body asset is not included.
-  if (headImg?.complete && headImg.naturalWidth) {
-    // actual head crop, composited on an original clothed body; the explicit
-    // full-body source is intentionally not included.
-    ctx.fillStyle = skin
-    ctx.fillRect(-6, -78 + bob, 12, 12)
-    ctx.strokeStyle = outline; ctx.lineWidth = 1.4
-    ctx.strokeRect(-6, -78 + bob, 12, 12)
-    drawHead3D(ctx, headImg, 0, -84 + bob, 60, 34, headYaw, headPitch, headRoll)
-    if (kick > 0.45) { ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillRect(-2, -68 + bob, 4, 2) }
-  } else {
-    ctx.fillStyle = skin; ctx.strokeStyle = outline; ctx.lineWidth = 1.7
-    ctx.beginPath(); ctx.ellipse(0, -88 + bob, 17, 20, 0, 0, TAU); ctx.fill(); ctx.stroke()
-    ctx.beginPath(); ctx.arc(-17, -86 + bob, 4, 0, TAU); ctx.fill(); ctx.stroke()
-    ctx.beginPath(); ctx.arc(17, -86 + bob, 4, 0, TAU); ctx.fill(); ctx.stroke()
-    ctx.fillStyle = '#4a2e1c'
-    ctx.beginPath(); ctx.ellipse(-15, -95 + bob, 4, 6, 0.3, 0, TAU); ctx.fill()
-    ctx.beginPath(); ctx.ellipse(15, -95 + bob, 4, 6, -0.3, 0, TAU); ctx.fill()
-    ctx.fillStyle = '#fff'
-    ctx.beginPath(); ctx.ellipse(-6, -93 + bob, 4.2, 4.8, 0, 0, TAU); ctx.fill()
-    ctx.beginPath(); ctx.ellipse(6, -93 + bob, 4.2, 4.8, 0, 0, TAU); ctx.fill()
-    ctx.fillStyle = '#0a0a0f'
-    const look = pose === 'rise' ? -1 : pose === 'zoom' ? 2 : 0
-    ctx.beginPath(); ctx.arc(-6 + look, -92 + bob, 2, 0, TAU); ctx.fill()
-    ctx.beginPath(); ctx.arc(6 + look, -92 + bob, 2, 0, TAU); ctx.fill()
-    ctx.strokeStyle = '#4a2e1c'; ctx.lineWidth = 1.4
-    ctx.beginPath(); ctx.moveTo(-10, -99 + bob); ctx.lineTo(-3, -98 + bob); ctx.stroke()
-    ctx.beginPath(); ctx.moveTo(3, -98 + bob); ctx.lineTo(10, -99 + bob); ctx.stroke()
-    ctx.fillStyle = dark
-    ctx.beginPath(); ctx.ellipse(0, -85 + bob, 4.5, 6, 0, 0, TAU); ctx.fill()
-    ctx.fillStyle = '#2b1a12'
-    ctx.beginPath(); ctx.ellipse(-5, -77 + bob, 6, 2.5, 0.12, 0, TAU); ctx.fill()
-    ctx.beginPath(); ctx.ellipse(5, -77 + bob, 6, 2.5, -0.12, 0, TAU); ctx.fill()
-    ctx.fillStyle = '#3a0a0a'
-    ctx.beginPath(); ctx.ellipse(0, -71 + bob, 5.5, 3.5, 0, 0, TAU); ctx.fill()
-    if (kick > 0.45) { ctx.fillStyle = '#fff'; ctx.fillRect(-3, -73 + bob, 6, 2) }
-  }
+function drawManShadow(ctx, x, y, w, alpha = 0.3) {
+  ctx.save()
+  ctx.globalAlpha = alpha
+  ctx.fillStyle = '#000'
+  ctx.beginPath(); ctx.ellipse(x, y, w * 0.42, 5, 0, 0, TAU); ctx.fill()
   ctx.restore()
 }
 
@@ -282,7 +205,6 @@ export class MonsquazScene {
     this.enabled = false
     this.headYaw = 0
     this.headPitch = 0
-    this.headRoll = 0
   }
 
   /** Start with the iconic green-arrow / soaring-bald-guy shot. */
@@ -300,7 +222,6 @@ export class MonsquazScene {
     this._lastRow = -1
     this.headYaw = 0
     this.headPitch = 0
-    this.headRoll = 0
   }
 
   handleEvent(e) {
@@ -366,7 +287,6 @@ export class MonsquazScene {
     const spinSpeed = this.phase === 3 ? 5.5 : 1.2
     this.headYaw += d * spinSpeed * (1 + this.snare * 3)
     this.headPitch = Math.sin(this.t * 1.7) * 0.35
-    this.headRoll = Math.sin(this.t * 1.1) * 0.08
   }
 
   draw(ctx, data) {
@@ -498,8 +418,9 @@ export class MonsquazScene {
   }
 
   drawActors(ctx, local, phase) {
+    const man = this.assets.man
     const cx = FRAME.x + FRAME.w / 2
-    const ground = 226
+    const ground = 232
 
     if (phase === 1) {
       const bob = sinT(this.t * 5) * 4
@@ -519,31 +440,35 @@ export class MonsquazScene {
         card(FRAME.x + 38, RAT, 'RAT', 1)
         card(FRAME.x + FRAME.w - 38, DOG, 'DOG', -1)
       }
-      const x = cx + sinT(this.t * 4.2) * 34
-      const y = ground - Math.abs(sinT(this.t * 4.2)) * 18 - this.kick * 12
+      // The actual guy dances between the two side cards, under the sunset.
+      const x = cx + sinT(this.t * 4.2) * 30
+      const y = ground - Math.abs(sinT(this.t * 4.2)) * 9 - this.kick * 11
+      drawManShadow(ctx, x, ground, 118, 0.34)
       if (this.kick > 0.7) drawDust(ctx, x, ground, this.kick)
-      drawBaldGuy(ctx, x, y, 1.72, 'dance', sinT(this.t * 4.2) * 0.06, this.t, this.kick, this.assets.head, this.headYaw, this.headPitch, this.headRoll)
+      drawMan(ctx, man, x, y, 216, sinT(this.t * 4.2) * 0.05, this.headYaw, this.headPitch)
     } else if (phase === 0) {
-      // The website's soaring shot: the guy passes through the frame, huge.
+      // The website's soaring shot: the actual figure passes through the frame,
+      // huge, exactly like the source loop.
       const rise = this.local
-      const y = 466 - rise * 428
-      ctx.save(); ctx.globalAlpha = 0.18
-      for (let k = 0; k < 2; k++) drawBaldGuy(ctx, cx + k * 4, y + 8 + k * 8, 1.9, 'rise', 0, this.t, 0, this.assets.head, this.headYaw, this.headPitch, this.headRoll)
-      ctx.restore()
-      drawBaldGuy(ctx, cx, y, 2.0, 'rise', Math.sin(this.t * 3) * 0.025, this.t, this.kick, this.assets.head, this.headYaw, this.headPitch, this.headRoll)
+      const y = 496 - rise * 528
+      for (let k = 2; k >= 1; k--) {
+        drawMan(ctx, man, cx + k * 5, y + k * 9, 232, Math.sin(this.t * 3) * 0.02, this.headYaw, this.headPitch, 0.13 * k)
+      }
+      drawMan(ctx, man, cx, y, 232, Math.sin(this.t * 3) * 0.02 + this.spin * 0.12, this.headYaw, this.headPitch)
       if (this.kick > 0.5) drawDust(ctx, cx, Math.min(ground, y + 6), this.kick)
     } else if (phase === 2) {
-      const y = 120 + local * 130
-      drawBaldGuy(ctx, cx + Math.sin(this.t * 2) * 12, y, 1.85, 'fall', sinT(this.t * 2.5) * 0.1 + this.spin * 0.45, this.t, 0, this.assets.head, this.headYaw, this.headPitch, this.headRoll)
+      const y = -32 + local * 528
+      drawMan(ctx, man, cx + Math.sin(this.t * 2) * 12, y, 216, sinT(this.t * 2.5) * 0.08 + this.spin * 0.4, this.headYaw, this.headPitch)
       if (this.land > 0.02) drawDust(ctx, cx, ground, this.land)
     } else {
-      const sc = 1.7 + local * 0.8
-      const x = cx - local * 95
-      const y = 92 + 78 * sc
-      ctx.save(); ctx.globalAlpha = 0.15
-      for (let k = 1; k <= 2; k++) drawBaldGuy(ctx, x + k * 7, y + k * 4, sc * 0.95, 'zoom', -0.1, this.t, 0, this.assets.head, this.headYaw, this.headPitch, this.headRoll)
-      ctx.restore()
-      drawBaldGuy(ctx, x, y, sc, 'zoom', -0.1 + sinT(this.t * 2) * 0.02, this.t, this.kick, this.assets.head, this.headYaw, this.headPitch, this.headRoll)
+      const h = 216 + local * 190
+      const x = cx - local * 105
+      const y = 232 + local * 12
+      for (let k = 2; k >= 1; k--) {
+        drawMan(ctx, man, x + k * 7, y + k * 3, h * 0.98, -0.09 + sinT(this.t * 2) * 0.02, this.headYaw, this.headPitch, 0.14 * k)
+      }
+      drawMan(ctx, man, x, y, h, -0.09 + sinT(this.t * 2) * 0.02, this.headYaw, this.headPitch)
+      if (this.kick > 0.5) drawDust(ctx, x, Math.min(ground, y), this.kick)
     }
   }
 
@@ -552,10 +477,10 @@ export class MonsquazScene {
     ctx.font = '5px "Silkscreen", monospace'
     ctx.textAlign = 'left'
     ctx.fillStyle = 'rgba(0,0,0,.5)'
-    ctx.fillRect(FRAME.x + 6, FRAME.h - 15, 100, 9)
+    ctx.fillRect(FRAME.x + 6, FRAME.h - 15, 118, 9)
     ctx.fillStyle = 'rgba(255,255,255,.75)'
     const chord = this.chord?.name || ''
-    ctx.fillText(`MONSQUAZ · 3D POTATO${chord ? ' · ' + chord : ''}${this.roman ? ' · ' + this.roman : ''}`, FRAME.x + 9, FRAME.h - 8)
+    ctx.fillText(`MONSQUAZ · CENSORED CUT${chord ? ' · ' + chord : ''}${this.roman ? ' · ' + this.roman : ''}`, FRAME.x + 9, FRAME.h - 8)
     ctx.textAlign = 'right'
     ctx.fillStyle = 'rgba(0,0,0,.5)'
     ctx.fillRect(FRAME.x + FRAME.w - 58, FRAME.h - 15, 52, 9)

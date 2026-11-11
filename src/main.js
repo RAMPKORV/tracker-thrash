@@ -334,7 +334,7 @@ function segmentLabel(seg) {
   if (seg.type === 'multiview') return 'MULTIVIEW FEED'
   if (seg.type === 'terminal') return 'TRACKER OS / TTY1'
   if (seg.type === 'bars') return 'SMPTE EMERGENCY BROADCAST'
-  if (seg.type === 'monsquaz') return 'MONSQUAZ MODE · 3D POTATO CUT'
+  if (seg.type === 'monsquaz') return 'MONSQUAZ MODE · ACTUAL GUY · CENSORED CUT'
   return SCENE_LABELS[seg.scene] || 'DEMOSCENE PLAZA'
 }
 
@@ -352,7 +352,7 @@ function applySegment(seg, announce = true) {
   const isMons = seg.type === 'monsquaz' || app.monsquazForced
   if (isMons) viz.setFormat('monsquaz')
   document.body.classList.toggle('monsquaz-mode', isMons)
-  const label = isMons ? 'MONSQUAZ MODE · 3D POTATO CUT' : segmentLabel(seg)
+  const label = isMons ? 'MONSQUAZ MODE · ACTUAL GUY · CENSORED CUT' : segmentLabel(seg)
   hud.setScene(label, app.genre.toUpperCase())
   if (announce) {
     gags.toast(`SEGMENT ${String(app.segmentIndex + 1).padStart(2, '0')}: ${label}`, 2.6)
@@ -389,8 +389,8 @@ function setMonsquazMode(on) {
     viz.setFormat('monsquaz')
     viz.monsquaz.begin()
     document.body.classList.add('monsquaz-mode')
-    hud.setScene('MONSQUAZ MODE · 3D POTATO CUT', app.genre.toUpperCase())
-    gags.toast('MONSQUAZ MODE: 3D potato cut. Safe for bass; unsafe for eye contact.', 4)
+    hud.setScene('MONSQUAZ MODE · ACTUAL GUY · CENSORED CUT', app.genre.toUpperCase())
+    gags.toast('MONSQUAZ MODE: the actual monsquazman, with the canonical green-arrow censor.', 4)
   } else {
     document.body.classList.remove('monsquaz-mode')
     if (app.segment?.type === 'monsquaz') advanceSegment()

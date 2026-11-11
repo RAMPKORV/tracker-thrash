@@ -12,9 +12,10 @@ The following files are taken from / derived from that repository:
 - `uparrow.png` — `images/uparrow.png`
 - `downarrow.png` — `images/downarrow.png`
 - `d-gallo.gif` — `images/d_gallo.gif`
-- `head.png` — a head-and-shoulders crop of `images/monsquazman.png`
+- `monsquazman.png` — `images/monsquazman.png`, the actual Monsquazman figure, with the
+  canonical green up-arrow censor baked over the groin
 
 The upstream repository declares `"license": "ISC"` in its package metadata. The original
-`monsquazman.png` full-body asset is **not** included: it is explicit nudity. Only the
-non-explicit head crop is bundled, and it is composited over an original clothed cartoon body.
-All other art in Monsquaz mode is original.
+`monsquazman.png` is explicit full frontal nudity. The bundled copy is the censored edition:
+the same green up-arrow used by the original animation's censored cut covers the groin, and
+no explicit pixels are included. All other art in Monsquaz mode is original.
