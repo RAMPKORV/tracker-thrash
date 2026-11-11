@@ -16,19 +16,20 @@
   <div class="gate-bg" aria-hidden="true"></div>
   <div class="gate-scan" aria-hidden="true"></div>
   <div class="gate-box">
-    <div class="gate-kicker">MODULE.EXE-ADJACENT EXPERIENCE · EST. 1994-ish</div>
+    <div class="gate-kicker">NO DEMO · NO AUTOPLAY · NO MERCY</div>
     <h1 class="gate-title"><span>TRACKER</span><span class="pink">TRASH</span></h1>
-    <p class="gate-tag">Drop a tracker module. Receive demoscene. Lose dignity.</p>
+    <p class="gate-tag">Open a tracker module. The show stays hidden until the music starts.</p>
     <div class="gate-warning">
       <b>⚠ CONTENT ADVISORY</b>
       <span>cartoon butt humour · flashing dither · one (1) brown note · severe groove</span>
     </div>
     <div class="gate-actions">
-      <button id="gate-enter" class="btn primary" autofocus>ENTER (HEADPHONES ON)</button>
-      <button id="gate-serious" class="btn">ENTER IN SERIOUS MODE</button>
+      <button id="gate-open" class="btn primary" autofocus>OPEN A MODULE</button>
+      <button id="gate-serious" class="btn">OPEN IN SERIOUS MODE</button>
     </div>
-    <p class="gate-fine">no uploads · no accounts · everything is local · libopenmpt inside</p>
-    <p class="gate-status" id="lib-status">warming up the 1994 machinery…</p>
+    <p class="gate-fine">no demo · no uploads · no accounts · everything is local · libopenmpt inside</p>
+    <p class="gate-drop-hint">or drop a module file anywhere on this screen</p>
+    <p class="gate-status" id="lib-status">no module, no show.</p>
   </div>
   <div class="gate-foot">not affiliated with your childhood · <span id="gate-version">v1.0</span></div>
 </div>
@@ -50,7 +51,7 @@
       </div>
       <div class="top-actions">
         <button id="btn-open" class="btn tiny" title="Open a module file (O)">OPEN</button>
-        <button id="btn-demo" class="btn tiny" title="Load the built-in demo (D)">DEMO</button>
+        <button id="btn-monsquaz" class="btn tiny" title="Monsquaz mode (Z)">MONSQ</button>
         <button id="btn-help" class="btn tiny" title="Help and credits (?)">?</button>
       </div>
     </header>
@@ -166,7 +167,6 @@
     </div>
   </div>
 
-  <input id="file" class="sr-only" type="file" accept=".mod,.xm,.s3m,.it,.mptm,.mtm,.669,.far,.med,.okt,.stm,.ult,.mo3,.umx,.dbm,.dsm,.mdl,audio/*" aria-label="Choose a tracker module">
 </div>
 
 <dialog id="help" class="help-dialog">
@@ -179,17 +179,19 @@
         <h3>DROP A FILE</h3>
         <p>Anything libopenmpt supports: .mod .xm .s3m .it .mptm .mtm .669 .far .med .okt .stm .ult .mo3 .umx and friends. Nothing is uploaded. Everything runs in your browser.</p>
         <h3>KEYS</h3>
-        <p><b>Space</b> play/pause · <b>←/→</b> seek 5s · <b>R</b> restart · <b>O</b> open · <b>D</b> demo · <b>M</b> full music panels · <b>S</b> serious · <b>H</b> HUD · <b>G</b> gross toggle · <b>F</b> fullscreen · <b>V</b> next background · <b>?</b> this</p>
+        <p><b>Space</b> play/pause · <b>←/→</b> seek 5s · <b>R</b> restart · <b>O</b> open · <b>Z</b> Monsquaz mode · <b>M</b> full music panels · <b>S</b> serious · <b>H</b> HUD · <b>G</b> gross toggle · <b>F</b> fullscreen · <b>V</b> next background · <b>?</b> this</p>
       </div>
       <div>
         <h3>READING THE HUD</h3>
         <p>By default the music lives in the scene: the chord is a monument/sign/rune, notes are physical objects, channel activity is pipes/KPI bars/CRT columns, and the next chord is foreshadowed in-world. Press <b>M</b> for the full piano roll, pattern grid and pitch-class clock when you want the x-ray view.</p>
         <h3>SERIOUS MODE</h3>
         <p>Keeps the demoscene and the theory, removes almost all gags and the poop engine. For when a musician walks in, or you are at work.</p>
+        <h3>MONSQUAZ MODE</h3>
+        <p>A music-synced recreation of the classic four-phase Monsquaz loop: up, sunset dance, down, zoom. The original choreography is by the Monsquaz project; this version uses the actual non-explicit up/down backgrounds, arrows, sunset, side GIF, and head crop, plus original art, with the module as its soundtrack. The head spins in 3D during the zoom. The original asset is NSFW and is not bundled. Press <b>Z</b> or use the <b>MONSQ</b> button.</p>
         <h3>ACCESSIBILITY</h3>
         <p>Flash-safe by default: no rapid full-screen flashes, capped shake, reduced motion respected. The chaos slider goes to 0. If you are photosensitive, keep it low. The captions and HUD are text, not baked into the canvas.</p>
         <h3>CREDITS</h3>
-        <p>Audio: <b>libopenmpt</b> (BSD-3-Clause) via <b>chiptune3</b> (MIT). Fonts: VT323 and Silkscreen (OFL). Everything else is procedural, hand-drawn pixel nonsense. Demo module “dj rat severe groove” was generated for this project.</p>
+        <p>Audio: <b>libopenmpt</b> (BSD-3-Clause) via <b>chiptune3</b> (MIT). Fonts: VT323 and Silkscreen (OFL). Everything else is procedural, hand-drawn pixel nonsense. Monsquaz mode credits the original <a href="https://github.com/Monsquaz/monsquaz-css3-html5" target="_blank" rel="noopener">Monsquaz CSS3/HTML5</a> choreography and bundles its non-explicit up/down backgrounds, arrows, sunset, side GIF, and a head crop. The original full-body asset is NSFW and not bundled.</p>
         <p class="dim">No copyrighted characters, images, or audio samples are bundled. Any resemblance to a real butt is coincidental.</p>
       </div>
     </div>
@@ -199,6 +201,10 @@
     </div>
   </form>
 </dialog>
+
+<button id="monsquaz-exit" class="btn tiny monsquaz-exit" type="button" title="Exit Monsquaz mode (Z or Escape)">EXIT MONSQUAZ [Z]</button>
+
+<input id="file" class="sr-only" type="file" accept=".mod,.xm,.s3m,.it,.mptm,.mtm,.669,.far,.med,.okt,.stm,.ult,.mo3,.umx,.dbm,.dsm,.mdl,audio/*" aria-label="Choose a tracker module">
 
 <div id="file-drop" class="file-drop" aria-hidden="true">
   <div class="file-drop-inner">

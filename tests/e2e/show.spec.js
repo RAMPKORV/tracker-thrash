@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { makeTestMod } from '../helpers/test-module.mjs'
 
 function trackErrors(page) {
   const errors = []
@@ -11,17 +12,39 @@ async function openShow(page, { serious = false } = {}) {
   const errors = trackErrors(page)
   await page.goto('/')
   await expect(page.locator('.gate-title')).toContainText('TRACKER')
-  await page.click(serious ? '#gate-serious' : '#gate-enter')
-  await page.waitForFunction(() => window.__TT?.model != null, null, { timeout: 35_000 })
-  await page.waitForTimeout(1200)
+  await expect(page.locator('#app')).toHaveAttribute('aria-hidden', 'true')
+  const [chooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.click(serious ? '#gate-serious' : '#gate-open'),
+  ])
+  await chooser.setFiles({ name: 'e2e-test.mod', mimeType: 'application/octet-stream', buffer: makeTestMod() })
+  await page.waitForFunction(
+    () => window.__TT?.model != null && document.getElementById('gate').classList.contains('gone'),
+    null,
+    { timeout: 35_000 },
+  )
+  await page.waitForTimeout(1000)
   return errors
 }
 
 test.describe('Given a tracker module in a browser', () => {
-  test('When the show starts, Then it loads the demo module, plays it, and shows musical information', async ({ page }) => {
+  test('When the gate is untouched, Then nothing is loaded, nothing plays, and no visualizer is revealed', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('.gate-title')).toContainText('TRACKER')
+    await expect(page.locator('#app')).toHaveAttribute('aria-hidden', 'true')
+    await expect(page.locator('#gate-open')).toBeVisible()
+    expect(await page.evaluate(() => __TT.model)).toBeNull()
+    await page.waitForTimeout(600)
+    expect(await page.evaluate(() => __TT.state.pos)).toBe(0)
+    expect(await page.evaluate(() => document.getElementById('gate').classList.contains('gone'))).toBe(false)
+    expect(await page.evaluate(() => getComputedStyle(document.getElementById('app')).visibility)).toBe('hidden')
+  })
+
+
+  test('When I open a module from the gate, Then it plays and only then reveals the visuals', async ({ page }) => {
     const errors = await openShow(page)
-    await test.step('the demo metadata and 4 channels are visible', async () => {
-      expect(await page.evaluate(() => __TT.model.title)).toMatch(/dj rat/i)
+    await test.step('the opened module metadata and 4 channels are visible', async () => {
+      expect(await page.evaluate(() => __TT.model.title)).toBe('E2E TEST MODULE')
       expect(await page.evaluate(() => __TT.model.maxChannels)).toBe(4)
       await expect(page.locator('#track-title')).not.toHaveText('NO MODULE LOADED')
       await expect(page.locator('#bc-channels .bc-led')).toHaveCount(4)
@@ -56,7 +79,7 @@ test.describe('Given a tracker module in a browser', () => {
       const b = await hash()
       expect(a).not.toBe(b)
     })
-    await page.screenshot({ path: 'test-results/shots/01-demo-show.png' })
+    await page.screenshot({ path: 'test-results/shots/01-user-module.png' })
     expect(errors).toEqual([])
   })
 
@@ -83,6 +106,26 @@ test.describe('Given a tracker module in a browser', () => {
     expect(await page.evaluate(() => document.getElementById('poop-toggle').disabled)).toBe(true)
     await page.evaluate(() => __TT.setSerious(false))
     await expect.poll(() => page.evaluate(() => __TT.settings.serious)).toBe(false)
+  })
+
+  test('When I enable Monsquaz mode, Then the choreography takes over and stays synced to the pattern', async ({ page }) => {
+    const errors = await openShow(page)
+    await page.click('#btn-monsquaz')
+    expect(await page.evaluate(() => __TT.viz.format)).toBe('monsquaz')
+    await expect(page.locator('body')).toHaveClass(/monsquaz-mode/)
+    await expect(page.locator('.broadcast')).toBeHidden()
+    const p1 = await page.evaluate(() => __TT.viz.monsquaz.phase)
+    const yaw1 = await page.evaluate(() => __TT.viz.monsquaz.headYaw)
+    await page.waitForTimeout(1800)
+    const p2 = await page.evaluate(() => __TT.viz.monsquaz.phase)
+    const yaw2 = await page.evaluate(() => __TT.viz.monsquaz.headYaw)
+    expect(p1).toBeGreaterThanOrEqual(0)
+    expect(p2).toBeGreaterThanOrEqual(0)
+    expect(yaw2).not.toBe(yaw1)
+    await page.screenshot({ path: 'test-results/shots/04-monsquaz.png' })
+    await page.click('#monsquaz-exit')
+    expect(await page.evaluate(() => __TT.viz.format)).not.toBe('monsquaz')
+    expect(errors).toEqual([])
   })
 
   test('When I open the music panels, Then the diegetic broadcast gives way to the full music-nerd HUD', async ({ page }) => {
@@ -125,6 +168,16 @@ test.describe('Given a tracker module in a browser', () => {
     await page.setInputFiles('#file', { name: 'not-a-module.txt', mimeType: 'text/plain', buffer: Buffer.from('this is not a module. it is a cry for help.') })
     await expect.poll(() => page.locator('#toast').textContent(), { timeout: 10_000 }).toMatch(/refused|left|error|not/i)
     await expect(page.locator('#loading')).toBeHidden()
+  })
+
+  test('When an invalid file is opened from the gate, Then the gate stays and the visuals stay hidden', async ({ page }) => {
+    await page.goto('/')
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#gate-open')])
+    await chooser.setFiles({ name: 'bad.txt', mimeType: 'text/plain', buffer: Buffer.from('not a module') })
+    await expect.poll(() => page.locator('#lib-status').textContent(), { timeout: 10_000 }).toMatch(/ERROR|refused|not revealed/i)
+    await expect(page.locator('#app')).toHaveAttribute('aria-hidden', 'true')
+    expect(await page.evaluate(() => document.getElementById('gate').classList.contains('gone'))).toBe(false)
+    expect(await page.evaluate(() => __TT.model)).toBeNull()
   })
 
   test('When chaos is raised, Then the gag layer wakes up and the poop forecast includes a type', async ({ page }) => {

@@ -2,6 +2,7 @@ import { drawSprite, RAT, WIZARD, DOG, CRT_UNCLE, MOTH } from './sprites.js'
 import { drawTurd, poopTypeForChord, POOP_TYPES } from './poop.js'
 import { pcName, keyName, rawNoteName, rawToMidi } from './theory.js'
 import { SplatField } from './splats.js'
+import { MonsquazScene } from './monsquaz.js'
 
 const W = 480
 const H = 270
@@ -191,6 +192,7 @@ export class Visualizer {
     this.key = null
     this.analysis = null
     this.splats = new SplatField()
+    this.monsquaz = new MonsquazScene()
     this.splatReturnAt = 0
     this.t = 0
     this.last = 0
@@ -271,9 +273,19 @@ export class Visualizer {
   }
 
   setFormat(format) {
-    const f = ['world', 'fx', 'multiview', 'terminal', 'bars'].includes(format) ? format : 'world'
+    const f = ['world', 'fx', 'multiview', 'terminal', 'bars', 'monsquaz'].includes(format) ? format : 'world'
     if (f === this.format) return
     this.format = f
+    if (f === 'monsquaz') {
+      this.monsquaz.begin()
+      this.turds = []
+      this.landed = 0
+      this.lastCaption = ''
+      this.captionUntil = 0
+    } else {
+      this.monsquaz.reset()
+    }
+    document.body.classList.toggle('monsquaz-mode', f === 'monsquaz')
     this.sceneChangedAt = this.t
     this.transition = { type: f === 'terminal' ? 'bars' : Math.random() < 0.45 ? 'iris' : 'flash', at: this.t, dur: f === 'terminal' ? 0.34 : 0.28 }
     this.glitch = Math.max(this.glitch, 0.3)
@@ -419,6 +431,7 @@ export class Visualizer {
     const now = this.t
     const state = data?.state || {}
     for (const e of events) {
+      if (this.format === 'monsquaz') this.monsquaz.handleEvent(e)
       if (e.type === 'section') {
         this.onSection(e, state)
       } else if (e.type === 'chord') {
@@ -693,6 +706,7 @@ export class Visualizer {
       else this.splats.setShape('tesseract')
     }
     this.splats.update(dt, this.t, this.bass, this.high)
+    this.monsquaz.update(data, dt)
     const cam = this.camera
     const mode = cam.mode
     if (mode === 'orbit' || mode === 'dolly' || mode === 'closeup' || mode === 'handheld' || mode === 'punch') {
@@ -821,6 +835,13 @@ export class Visualizer {
     if (shake > 0.1) ctx.translate(rand(-shake, shake), rand(-shake, shake))
 
     this.renderBackground(this.t, this.energy, this.bass)
+    if (this.format === 'monsquaz') {
+      this.monsquaz.draw(ctx, data)
+      this.drawTransition(ctx)
+      ctx.restore()
+      if (this.glitch > 0.02) this.drawGlitch(ctx)
+      return
+    }
     if (this.format === 'multiview') {
       this.drawMultiview(ctx)
       this.drawMonument(ctx)

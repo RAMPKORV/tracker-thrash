@@ -165,13 +165,6 @@ export class TrackerEngine {
     await this.loadArrayBuffer(buf, name)
   }
 
-  async loadDemo() {
-    const url = new URL('../assets/demo/dj-rat-severe-groove.mod', import.meta.url)
-    const res = await fetch(url)
-    if (!res.ok) throw new Error(`Demo module missing (${res.status}). The bass has left the building.`)
-    const buf = await res.arrayBuffer()
-    await this.loadArrayBuffer(buf, 'dj-rat-severe-groove.mod')
-  }
 
   async play() {
     await this.init()

@@ -5,7 +5,11 @@ import { resolve } from 'node:path'
 import libopenmptPromise from '../vendor/libopenmpt.worklet.js'
 
 const lib = await libopenmptPromise()
-const path = process.argv[2] || 'assets/demo/dj-rat-severe-groove.mod'
+const path = process.argv[2]
+if (!path) {
+  console.error('usage: node tools/inspect-mod.mjs <module-file>')
+  process.exit(1)
+}
 const buf = readFileSync(resolve(path))
 const ptr = lib._malloc(buf.length)
 lib.HEAPU8.set(buf, ptr)

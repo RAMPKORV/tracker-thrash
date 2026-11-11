@@ -111,6 +111,12 @@ button { cursor: pointer; }
 .gate-warning b { font-family: var(--px); font-size: 9px; color: var(--yellow); letter-spacing: .1em; }
 .gate-warning span { color: #d8cc9b; font-size: 18px; }
 .gate-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.gate-actions .btn { font-size: 11px; padding: 10px 14px; }
+.gate-drop-hint { margin: 10px 0 0; color: var(--cyan); font-size: 17px; }
+.gate.dragging .gate-box { border-color: var(--yellow); box-shadow: 0 0 0 1px #000, 0 0 80px rgba(255,232,0,.25), inset 0 0 60px rgba(255,232,0,.06); }
+.gate.dragging .gate-tag { color: var(--yellow); }
+.gate.working .gate-status { animation: gate-blink 0.8s steps(2) infinite; }
+@keyframes gate-blink { 50% { opacity: .35; } }
 .gate-fine { margin: 16px 0 0; color: var(--muted); font-size: 16px; }
 .gate-status { margin: 4px 0 0; color: var(--cyan); font-size: 16px; min-height: 1.2em; }
 .gate-foot {
@@ -261,6 +267,13 @@ body.nerd-mode .left-rail { display: flex; }
 body.nerd-mode .right-rail { display: flex; }
 body.nerd-mode .bottom-dock { display: grid; }
 body.nerd-mode .broadcast { display: none; }
+body.monsquaz-mode .topbar, body.monsquaz-mode .transport, body.monsquaz-mode .crt, body.monsquaz-mode .broadcast, body.monsquaz-mode .bottom-dock, body.monsquaz-mode .left-rail, body.monsquaz-mode .right-rail { display: none !important; }
+body.monsquaz-mode { background: #001109; }
+.monsquaz-exit { position: fixed; z-index: 90; top: 10px; right: 10px; display: none; background: rgba(0,0,0,.55); border-color: rgba(255,255,255,.4); color: #fff; font-size: 8px; }
+body.monsquaz-mode .monsquaz-exit { display: block; }
+body.monsquaz-mode #btn-monsquaz { border-color: var(--yellow); color: var(--yellow); background: #1d1a08; }
+
+body.monsquaz-mode .gag-layer, body.monsquaz-mode .caption, body.monsquaz-mode #toast, body.monsquaz-mode #loading { display: none !important; }
 .bottom-dock > .panel { min-height: 0; overflow: hidden; }
 .chord-panel { display: flex; flex-direction: column; min-width: 0; }
 .chord-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-family: var(--px); font-size: 8px; color: var(--dim); letter-spacing: .08em; }

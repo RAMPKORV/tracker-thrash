@@ -1,6 +1,8 @@
 # TRACKER TRASH
 
-**Drop a tracker module. Receive demoscene. Lose dignity.**
+**Open a tracker module. Receive demoscene. Lose dignity.**
+
+There is no demo, no autoplay, and no visualizer preview. The gate stays up until you open a real module and playback begins.
 
 A pure-frontend, GitHub-Pages-friendly music visualizer for tracker modules (`.mod`, `.xm`, `.s3m`, `.it`, `.mptm`, and 60+ more libopenmpt formats). It combines:
 
@@ -10,6 +12,7 @@ A pure-frontend, GitHub-Pages-friendly music visualizer for tracker modules (`.m
 - **Diegetic absurdity**: the chord is a monument, the channel meters are pipes/organ tubes/KPI bars/CRT columns, the notes are physical objects, and the poop forecast is a weather report.
 - **A scatological cartoon mascot** (“THE BASS ASS”) whose turd type, size, colour tag, and label are driven by the bass note and the current chord. It piles up, gets flushed on section changes, and is always labelled with the note/chord that caused it.
 - **Running characters and gags**: DJ Rat, Bass Ass, Sad Wizard, Business Dog, The Orb, Uncle Tracker, GARY the hidden pixel, fake dialogs, ads, SMPTE emergencies, a fake media player, BSOD, “graphic design is my passion”, scroller hijacks, achievements, fog, and more.
+- **Monsquaz mode**: a full-screen, music-synced recreation of the classic four-phase up / sunset dance / down / zoom loop, using the actual Monsquaz up/down backgrounds, glossy arrows, sunset photo, side GIF, and a non-explicit Monsquazman head crop, composited with original art and retrowave zoom effects. The actual head crop spins in 3D ("rotate the potato") during the zoom phase. Press **Z** or the **MONSQ** button. The original NSFW full-body asset is not bundled.
 - **A show director** that changes scene, camera, effect, and whole presentation format (world / fullscreen FX / multiview / TRACKER OS terminal / SMPTE) on musical section boundaries. It is not one stage with palette swaps.
 
 Everything runs locally in the browser. No uploads, no accounts, no server-side code.
@@ -39,7 +42,7 @@ npm run dev
 | `←` / `→` | seek −5s / +5s |
 | `R` | restart |
 | `O` | open file picker |
-| `D` | load the built-in demo |
+| `Z` | toggle Monsquaz mode |
 | `M` | toggle the full music-nerd panels |
 | `S` | serious mode |
 | `H` | hide/show the HUD |
@@ -86,7 +89,7 @@ The cartoon butt is deliberately **cartoon, non-anatomical, and non-sexual**. No
 The project was built test-first / behaviour-first.
 
 ```bash
-npm run test:unit     # Node tests: theory, tracker analysis, look-ahead, poop taxonomy, demo module validity
+npm run test:unit     # Node tests: theory, tracker analysis, look-ahead, poop taxonomy, generated test-module validity
 npm run test:e2e      # Playwright: real AudioWorklet playback, HUD, formats, pause, seek, invalid file, mobile, gags
 npm test              # both
 ```
@@ -141,7 +144,7 @@ A workflow is included at `.github/workflows/pages.yml`. It stages only the stat
 - `vendor/libopenmpt.worklet.js` is a 1.5 MB single-file build with the wasm embedded. It is served as a normal JS module; GitHub Pages’ gzip gets it to ~500 KB.
 - AudioWorklet requires a secure context. `https://` (GitHub Pages) and `http://localhost` are fine; `file://` is not.
 - No server headers (COOP/COEP) are needed. The site does not use SharedArrayBuffer.
-- The demo module and all fonts are vendored.
+- All fonts are vendored. There is no demo module.
 
 ---
 
@@ -155,26 +158,20 @@ src/engine.js            lazy AudioContext + chiptune3/libopenmpt wrapper
 src/tracker.js           module model, measure harmony, key/chord analysis, look-ahead
 src/theory.js            note spelling, chord templates, Krumhansl key profiles, roman numerals
 src/visualizer.js        indexed low-res stage, 14 demoscene effects, scenes, cameras, formats
+src/monsquaz.js          music-synced Monsquaz takeover (actual assets + original art)
 src/splats.js            4D Gaussian-splat morph field
 src/hud.js               diegetic broadcast + full music-nerd panels
 src/gags.js              dialogs, chyrons, ads, SMPTE, player, BSOD, achievements
 src/sprites.js           pixel mascots
 src/poop.js              turd taxonomy + procedural renderer
 vendor/                  chiptune3 + libopenmpt wasm build + licenses
-assets/demo/             generated demo module
 assets/fonts/            VT323 + Silkscreen (OFL)
+assets/monsquaz/         attributed Monsquaz assets + original head crop
+tests/helpers/           in-memory MOD fixture for tests (not shipped)
 tests/unit/              Node TDD suites
 tests/e2e/               Playwright BDD suites
-tools/                   static server, demo generator, module inspector
+tools/                   static server and module inspector
 ```
-
-### Regenerating the demo module
-
-```bash
-node tools/make-demo-mod.mjs
-```
-
-It writes `assets/demo/dj-rat-severe-groove.mod` (4-channel ProTracker, 8 patterns, 76.8s).
 
 ---
 
@@ -183,7 +180,8 @@ It writes `assets/demo/dj-rat-severe-groove.mod` (4-channel ProTracker, 8 patter
 - **libopenmpt** — BSD-3-Clause. See `vendor/LIBOPENMPT-LICENSE.txt`.
 - **chiptune3** — MIT. See `vendor/CHIPTUNE3-LICENSE.txt`.
 - **VT323** and **Silkscreen** — SIL Open Font License. See `assets/fonts/`.
-- Demo module, visualizer code, sprites, gags, and all procedural art — MIT (see `LICENSE`), except third-party components above.
+- Visualizer code, sprites, gags, and all procedural art — MIT (see `LICENSE`), except third-party components above.
+- **Monsquaz mode** is a fan recreation of the choreography from [Monsquaz/monsquaz-css3-html5](https://github.com/Monsquaz/monsquaz-css3-html5) (ISC repository metadata). The non-explicit source assets (up/down backgrounds, arrows, sunset photo, side GIF, and a head crop) are bundled under `assets/monsquaz/` with attribution in `ATTRIBUTION.md`. The original full-body NSFW asset is intentionally not included; its role is taken by an original clothed cartoon body with the actual head crop.
 - No copyrighted sprites, images, audio samples, or trademarks are bundled. Any resemblance to a real butt is coincidental.
 
 Not affiliated with the OpenMPT project, GitHub, or your childhood.

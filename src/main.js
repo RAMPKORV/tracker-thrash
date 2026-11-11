@@ -26,7 +26,7 @@ const nowSec = () => performance.now() / 1000
 const els = {
   gate: $('gate'),
   app: $('app'),
-  gateEnter: $('gate-enter'),
+  gateOpen: $('gate-open'),
   gateSerious: $('gate-serious'),
   gateStatus: $('lib-status'),
   stage: $('stage'),
@@ -36,7 +36,8 @@ const els = {
   loadingText: $('loading-text'),
   help: $('help'),
   btnOpen: $('btn-open'),
-  btnDemo: $('btn-demo'),
+  btnMonsquaz: $('btn-monsquaz'),
+  monsquazExit: $('monsquaz-exit'),
   btnHelp: $('btn-help'),
   btnPlay: $('btn-play'),
   btnRestart: $('btn-restart'),
@@ -93,6 +94,9 @@ const app = {
   segmentSections: 0,
   lastGenreAt: -10,
   lastGagTick: -10,
+  pendingReveal: false,
+  monsquazForced: false,
+  revealTimer: null,
 }
 
 const settings = {
@@ -208,29 +212,47 @@ const fmt = s => {
   return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`
 }
 
-function enterApp(serious = false) {
-  settings.serious = serious
+function setGateStatus(text) {
+  els.gateStatus.textContent = text
+}
+
+function requestModule(serious = false) {
+  settings.serious = !!serious
   if (serious) settings.chaos = Math.min(settings.chaos, 1)
   applySettings()
-  els.gate.classList.add('gone')
-  els.app.setAttribute('aria-hidden', 'false')
-  setTimeout(() => { els.gate.style.display = 'none' }, 400)
-  showLoading('waking the 1994 machinery…')
-  engine.init()
-    .then(() => {
-      els.gateStatus.textContent = 'libopenmpt inside · no uploads · all local'
-      const version = engine.meta?.libopenmptVersion
-      if (version) els.gateStatus.textContent = `libopenmpt ${version} · all local`
-      return engine.loadDemo()
-    })
-    .catch(err => {
-      hideLoading()
-      toast(`Could not start: ${err.message}`, 8)
-      els.gate.classList.remove('gone')
-      els.gate.style.display = ''
-      els.app.setAttribute('aria-hidden', 'true')
-    })
+  // Must happen synchronously inside the click: browsers require a user
+  // activation for both AudioContext and the file picker.
+  engine.init().catch(err => {
+    setGateStatus(`AUDIO ENGINE FAILED: ${err.message}`)
+  })
+  els.file.value = ''
+  els.file.click()
+  setGateStatus('SELECT A MODULE. THE SHOW REMAINS HIDDEN UNTIL IT PLAYS.')
+  els.gate.classList.remove('working')
 }
+
+function revealApp(announce = true) {
+  if (!els.gate.classList.contains('gone')) {
+    clearTimeout(app.revealTimer)
+    els.gate.classList.add('gone')
+    setTimeout(() => { els.gate.style.display = 'none' }, 380)
+    els.app.setAttribute('aria-hidden', 'false')
+    hideLoading()
+    if (announce && app.model) {
+      const title = app.model.title
+      gags.toast(`LOADED: ${title} — ${app.model.artist}`, 4)
+      gags.caption(`FORMAT ${app.model.format}. ${app.model.maxChannels} CHANNELS OF UNLICENSED EMOTION.`, 4)
+      els.live.textContent = `Loaded ${title} by ${app.model.artist}. ${app.model.format} module, ${app.model.channels.filter(c => c.noteCount).length} active channels.`
+      if (app.model.subsongs.length > 1) {
+        gags.toast(`THIS MODULE HAS ${app.model.subsongs.length} SUBSONGS. THE FIRST ONE HAS BEEN SELECTED. THE OTHERS ARE EMOTIONAL SUPPORT.`, 5)
+      }
+      updateTransport()
+    }
+  } else {
+    hideLoading()
+  }
+}
+
 
 const SCENE_LABELS = {
   plaza: 'DEMOSCENE PLAZA', factory: 'BASS FACTORY', dungeon: "SAD WIZARD'S DUNGEON",
@@ -260,10 +282,11 @@ function segmentDeckFor(genre) {
   const multi = scene => ({ type: 'multiview', scene, camera: 'wide', length: 1 })
   const term = scene => ({ type: 'terminal', scene, length: 1 })
   const bars = () => ({ type: 'bars', scene: 'plaza', length: 1 })
+  const mons = () => ({ type: 'monsquaz', scene: 'plaza', length: 1 })
   const decks = {
     chiptune: [
       world('plaza', 'wide'), fx('plaza', 'rotozoom', 'orbit'),
-      world('factory', 'closeup'), multi('plaza'),
+      world('factory', 'closeup'), mons(), multi('plaza'),
       world('cosmic', 'orbit'), fx('plaza', 'onebit', 'dolly'), term('cosmic'),
       world('dungeon', 'dolly'), fx('hell', 'dotTunnel', 'punch'),
       world('office', 'handheld'), fx('cosmic', 'glenz', 'orbit'),
@@ -271,7 +294,7 @@ function segmentDeckFor(genre) {
     ],
     rave: [
       world('factory', 'closeup'), fx('hell', 'dotTunnel', 'punch'),
-      world('hell', 'punch'), multi('factory'),
+      world('hell', 'punch'), mons(), multi('factory'),
       world('plaza', 'wide'), fx('hell', 'fire', 'handheld'),
       term('hell'), world('office', 'handheld'),
       world('cosmic', 'orbit'), fx('factory', 'rotozoom', 'punch'),
@@ -296,7 +319,7 @@ function segmentDeckFor(genre) {
     ],
     demoscene: [
       world('plaza', 'wide'), fx('plaza', 'tunnel', 'orbit'),
-      world('factory', 'closeup'), multi('cosmic'),
+      world('factory', 'closeup'), mons(), multi('cosmic'),
       world('dungeon', 'dolly'), fx('hell', 'fire', 'punch'),
       world('office', 'handheld'), term('plaza'),
       world('cosmic', 'orbit'), fx('cosmic', 'glenz', 'orbit'), bars(),
@@ -311,6 +334,7 @@ function segmentLabel(seg) {
   if (seg.type === 'multiview') return 'MULTIVIEW FEED'
   if (seg.type === 'terminal') return 'TRACKER OS / TTY1'
   if (seg.type === 'bars') return 'SMPTE EMERGENCY BROADCAST'
+  if (seg.type === 'monsquaz') return 'MONSQUAZ MODE · 3D POTATO CUT'
   return SCENE_LABELS[seg.scene] || 'DEMOSCENE PLAZA'
 }
 
@@ -325,7 +349,10 @@ function applySegment(seg, announce = true) {
   if (seg.type === 'fx') viz.setEffect(seg.effect)
   else if (seg.type === 'world') viz.setEffect(seg.effect || viz.effectPool[0])
   viz.setCamera(seg.camera || 'wide')
-  const label = segmentLabel(seg)
+  const isMons = seg.type === 'monsquaz' || app.monsquazForced
+  if (isMons) viz.setFormat('monsquaz')
+  document.body.classList.toggle('monsquaz-mode', isMons)
+  const label = isMons ? 'MONSQUAZ MODE · 3D POTATO CUT' : segmentLabel(seg)
   hud.setScene(label, app.genre.toUpperCase())
   if (announce) {
     gags.toast(`SEGMENT ${String(app.segmentIndex + 1).padStart(2, '0')}: ${label}`, 2.6)
@@ -352,6 +379,26 @@ function advanceSegment() {
   applySegment(seg)
 }
 
+function setMonsquazMode(on) {
+  app.monsquazForced = !!on
+  if (els.btnMonsquaz) {
+    els.btnMonsquaz.classList.toggle('on', app.monsquazForced)
+    els.btnMonsquaz.textContent = app.monsquazForced ? 'MONSQ: ON' : 'MONSQ'
+  }
+  if (app.monsquazForced) {
+    viz.setFormat('monsquaz')
+    viz.monsquaz.begin()
+    document.body.classList.add('monsquaz-mode')
+    hud.setScene('MONSQUAZ MODE · 3D POTATO CUT', app.genre.toUpperCase())
+    gags.toast('MONSQUAZ MODE: 3D potato cut. Safe for bass; unsafe for eye contact.', 4)
+  } else {
+    document.body.classList.remove('monsquaz-mode')
+    if (app.segment?.type === 'monsquaz') advanceSegment()
+    else applySegment(app.segment, false)
+    gags.toast('MONSQUAZ MODE OFF. the guy has left the video.', 3)
+  }
+}
+
 function buildFromMeta(meta) {
   app.meta = meta
   app.model = buildSongModel(meta)
@@ -370,21 +417,43 @@ function buildFromMeta(meta) {
   app.sceneDeck = app.segmentDeck.filter(x => x.type === 'world').map(x => x.scene)
   applySegment(app.segmentDeck[0], false)
   viz.setGenre(app.genre)
-  hideLoading()
-  const title = app.model.title
-  gags.toast(`LOADED: ${title} — ${app.model.artist}`, 4)
-  gags.caption(`FORMAT ${app.model.format}. ${app.model.maxChannels} CHANNELS OF UNLICENSED EMOTION.`, 4)
-  els.live.textContent = `Loaded ${title} by ${app.model.artist}. ${app.model.format} module, ${app.model.channels.filter(c => c.noteCount).length} active channels.`
   app.started = true
-  if (app.model.subsongs.length > 1) {
-    gags.toast(`THIS MODULE HAS ${app.model.subsongs.length} SUBSONGS. THE FIRST ONE HAS BEEN SELECTED. THE OTHERS ARE EMOTIONAL SUPPORT.`, 5)
+  const firstLoad = !els.gate.classList.contains('gone')
+  if (firstLoad) {
+    app.pendingReveal = true
+    hideLoading()
+    els.gate.classList.remove('working')
+    setGateStatus('PLAYBACK STARTING. THE SHOW IS ABOUT TO BE REVEALED…')
+    clearTimeout(app.revealTimer)
+    app.revealTimer = setTimeout(() => {
+      if (app.pendingReveal) {
+        app.pendingReveal = false
+        setGateStatus('ERROR: AUDIO DID NOT START. THE SHOW WAS NOT REVEALED. TRY OPENING A MODULE AGAIN.')
+      }
+    }, 8000)
+  } else {
+    hideLoading()
+    const title = app.model.title
+    gags.toast(`LOADED: ${title} — ${app.model.artist}`, 4)
+    gags.caption(`FORMAT ${app.model.format}. ${app.model.maxChannels} CHANNELS OF UNLICENSED EMOTION.`, 4)
+    els.live.textContent = `Loaded ${title} by ${app.model.artist}. ${app.model.format} module, ${app.model.channels.filter(c => c.noteCount).length} active channels.`
+    updateTransport()
+    if (app.model.subsongs.length > 1) {
+      gags.toast(`THIS MODULE HAS ${app.model.subsongs.length} SUBSONGS. THE FIRST ONE HAS BEEN SELECTED. THE OTHERS ARE EMOTIONAL SUPPORT.`, 5)
+    }
   }
-  updateTransport()
 }
 
 engine.onMeta = meta => buildFromMeta(meta)
 engine.onError = msg => {
   hideLoading()
+  if (!els.gate.classList.contains('gone')) {
+    app.pendingReveal = false
+    clearTimeout(app.revealTimer)
+    els.gate.classList.remove('working')
+    setGateStatus(`ERROR: ${msg} THE SHOW WAS NOT REVEALED.`)
+    return
+  }
   toast(msg, 7)
   gags.caption('the module has left the chat.', 3)
 }
@@ -399,8 +468,10 @@ engine.onSeek = () => {
 }
 engine.onState = () => {
   if (!engine.initialized) return
-  if (!engine.paused) {
-    if (!app.started) app.started = true
+  if (app.pendingReveal && !engine.paused) {
+    app.pendingReveal = false
+    clearTimeout(app.revealTimer)
+    revealApp(true)
   }
 }
 
@@ -411,21 +482,31 @@ function loadFile(file) {
     // libopenmpt decides in the end; just warn for obvious nonsense.
     if (!file.name) toast('That file has no name. Very mysterious. Very illegal.', 4)
   }
-  showLoading('unpacking samples, ego, and one (1) brown note…')
-  engine.loadFile(file).catch(err => {
-    hideLoading()
-    toast(err.message || 'Could not load that file.', 7)
-  })
+  const firstLoad = !els.gate.classList.contains('gone')
+  if (firstLoad) {
+    els.gate.classList.add('working')
+    setGateStatus(`PARSING ${String(file.name || 'MODULE').toUpperCase()} · THE SHOW IS STILL A SECRET…`)
+  } else {
+    showLoading('unpacking samples, ego, and one (1) brown note…')
+  }
+  engine.init()
+    .then(() => engine.loadFile(file))
+    .catch(err => {
+      hideLoading()
+      els.gate.classList.remove('working')
+      if (firstLoad) {
+        app.pendingReveal = false
+        setGateStatus(`ERROR: ${err.message || 'Could not load that file.'} THE SHOW WAS NOT REVEALED.`)
+      } else {
+        toast(err.message || 'Could not load that file.', 7)
+      }
+    })
 }
 
 /* ---------------------------------------------------------------- events */
-els.gateEnter.addEventListener('click', () => enterApp(false))
-els.gateSerious.addEventListener('click', () => enterApp(true))
+els.gateOpen.addEventListener('click', () => requestModule(false))
+els.gateSerious.addEventListener('click', () => requestModule(true))
 els.btnOpen.addEventListener('click', () => els.file.click())
-els.btnDemo.addEventListener('click', async () => {
-  showLoading('reloading the demo. the rat is putting on headphones…')
-  try { await engine.loadDemo() } catch (e) { hideLoading(); toast(e.message, 6) }
-})
 els.btnHelp.addEventListener('click', () => els.help.showModal())
 els.help.addEventListener('click', e => {
   if (e.target === els.help) els.help.close()
@@ -464,6 +545,8 @@ els.chaos.addEventListener('change', () => {
 })
 els.poop.addEventListener('change', () => setGross(els.poop.checked))
 els.btnSerious.addEventListener('click', () => setSerious(!settings.serious))
+els.btnMonsquaz.addEventListener('click', () => setMonsquazMode(!app.monsquazForced))
+els.monsquazExit.addEventListener('click', () => setMonsquazMode(false))
 els.btnMusic.addEventListener('click', () => setNerd(true))
 els.btnNerd.addEventListener('click', () => setNerd(!settings.nerd))
 els.btnHud.addEventListener('click', () => {
@@ -485,7 +568,11 @@ document.addEventListener('keydown', e => {
   else if (e.code === 'ArrowRight') { e.preventDefault(); engine.seek(engine.position + 5) }
   else if (e.key === 'r' || e.key === 'R') els.btnRestart.click()
   else if (e.key === 'o' || e.key === 'O') els.file.click()
-  else if (e.key === 'd' || e.key === 'D') els.btnDemo.click()
+  else if (e.key === 'Escape') setMonsquazMode(false)
+  else if (e.key === 'z' || e.key === 'Z') {
+    if (app.monsquazForced || app.segment?.type === 'monsquaz') setMonsquazMode(false)
+    else setMonsquazMode(true)
+  }
   else if (e.key === 'm' || e.key === 'M') setNerd(!settings.nerd)
   else if (e.key === 's' || e.key === 'S') setSerious(!settings.serious)
   else if (e.key === 'h' || e.key === 'H') els.btnHud.click()
@@ -504,7 +591,12 @@ window.addEventListener('dragenter', e => {
   if (![...(e.dataTransfer?.types || [])].includes('Files')) return
   e.preventDefault()
   dragDepth++
-  if (els.gate.classList.contains('gone')) els.fileDrop.classList.add('on')
+  if (els.gate.classList.contains('gone')) {
+    els.fileDrop.classList.add('on')
+  } else {
+    els.gate.classList.add('dragging')
+    setGateStatus('DROP IT. THE SHOW IS STILL A SECRET.')
+  }
 })
 window.addEventListener('dragover', e => {
   if (![...(e.dataTransfer?.types || [])].includes('Files')) return
@@ -513,13 +605,16 @@ window.addEventListener('dragover', e => {
 window.addEventListener('dragleave', e => {
   e.preventDefault()
   dragDepth = Math.max(0, dragDepth - 1)
-  if (dragDepth === 0) els.fileDrop.classList.remove('on')
+  if (dragDepth === 0) {
+    els.fileDrop.classList.remove('on')
+    els.gate.classList.remove('dragging')
+  }
 })
 window.addEventListener('drop', e => {
   e.preventDefault()
   dragDepth = 0
   els.fileDrop.classList.remove('on')
-  if (!els.gate.classList.contains('gone')) return
+  els.gate.classList.remove('dragging')
   const f = e.dataTransfer?.files?.[0]
   if (f) loadFile(f)
 })
@@ -602,7 +697,7 @@ function frame(ts) {
 loadSettings()
 applySettings()
 updateTransport()
-els.gateStatus.textContent = 'ready when you are. headphones recommended.'
+els.gateStatus.textContent = 'no module, no show.'
 window.__TT = {
   engine, viz, hud, gags,
   get model() { return app.model },
@@ -610,11 +705,10 @@ window.__TT = {
   get state() { return engine.state },
   get settings() { return settings },
   get errors() { return app.errors },
-  enter: enterApp,
-  loadDemo: async () => { showLoading(); try { await engine.loadDemo() } catch (e) { hideLoading(); toast(e.message) } },
   loadFile,
+  requestModule,
   seek: s => engine.seek(s),
-  setChaos, setSerious, setGross, setNerd,
+  setChaos, setSerious, setGross, setNerd, setMonsquaz: setMonsquazMode,
   get scene() { return app.scene },
   get genre() { return app.genre },
   get segment() { return app.segment },

@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test'
+import { makeTestMod } from '../helpers/test-module.mjs'
 
 async function openShow(page) {
   await page.goto('/')
-  await page.click('#gate-enter')
-  await page.waitForFunction(() => window.__TT?.model != null, null, { timeout: 35_000 })
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#gate-open')])
+  await chooser.setFiles({ name: 'visual-test.mod', mimeType: 'application/octet-stream', buffer: makeTestMod() })
+  await page.waitForFunction(() => window.__TT?.model != null && document.getElementById('gate').classList.contains('gone'), null, { timeout: 35_000 })
   await page.waitForTimeout(1200)
 }
 
